@@ -4,6 +4,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.sticky-header th {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background-color: rgb(249 250 251); /* bg-gray-50 */
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1); /* subtle shadow when stuck */
+}
+
+/* Make sure borders don't double when stuck */
+.sticky-header th {
+  border-bottom: 1px solid #e5e7eb; /* divide-gray-200 */
+}
+
+.group-title {
+  background: #f3f4f6;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
