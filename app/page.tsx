@@ -3,34 +3,47 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import React from "react";
 
 type Product = {
-  NAMAPRODUK: string;
-  KodeProduk: string;
-  hargajual1: string;
-  isstokkosong: number;
-  isgangguan: number;
+  nama: string;
+  kode: string;
+  harga: number;
+  stokKosong: number;
+  gangguan: number;
+};
+
+type OperatorGroup = {
+  operator: string;
+  idoperator: number;
+  products: Product[];
 };
 
 export default function ProdukPage() {
-  const [data, setData] = useState<Product[]>([]);
+  const [data, setData] = useState<OperatorGroup[]>([]);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     async function loadData() {
       const res = await fetch("/api/data");
       const json = await res.json();
+
       setData(json);
     }
 
     loadData();
   }, []);
 
-  const filtered = data.filter(
-    (item) =>
-      item.NAMAPRODUK.toLowerCase().includes(search.toLowerCase()) ||
-      item.KodeProduk.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = data
+    .map((group) => ({
+      ...group,
+      products: group.products.filter(
+        (item) =>
+          item.nama.toLowerCase().includes(search.toLowerCase()) ||
+          item.kode.toLowerCase().includes(search.toLowerCase()),
+      ),
+    }))
+    .filter((group) => group.products.length > 0);
 
   return (
     <div className="p-4 max-w-4xl mx-auto min-h-screen">
@@ -78,61 +91,61 @@ export default function ProdukPage() {
           </thead>
 
           <tbody className="bg-white divide-y divide-gray-200">
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-gray-500">
-                  Tidak ada produk ditemukan
-                </td>
-              </tr>
-            ) : (
-              filtered.map((item, index) => {
-                const harga = Number(item.hargajual1).toLocaleString("id-ID");
+            {filtered.map((group) => (
+              <React.Fragment key={group.idoperator}>
+                {/* Operator header */}
+                <tr className="bg-gray-100">
+                  <td
+                    colSpan={4}
+                    className="px-3 py-2 font-semibold text-gray-700"
+                  >
+                    {group.operator}
+                  </td>
+                </tr>
 
-                const isGangguan = item.isgangguan === 1;
-                const stokKosong = item.isstokkosong === 1;
+                {group.products.map((item) => {
+                  const harga = Number(item.harga).toLocaleString("id-ID");
 
-                return (
-                  <tr key={index} className="hover:bg-gray-50">
-                    {/* Produk name + code (stacked on mobile) */}
-                    <td className="px-3 py-3">
-                      <div className="font-medium text-gray-900">
-                        {item.NAMAPRODUK}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-0.5 sm:hidden">
-                        {item.KodeProduk}
-                      </div>
-                    </td>
+                  const isGangguan = item.gangguan === 1;
+                  const stokKosong = item.stokKosong === 1;
 
-                    {/* Kode - hidden on very small screens */}
-                    <td className="px-3 py-3 text-gray-600 hidden sm:table-cell">
-                      {item.KodeProduk}
-                    </td>
+                  return (
+                    <tr key={item.kode} className="hover:bg-gray-50">
+                      <td className="px-3 py-3">
+                        <div className="font-medium text-gray-900">
+                          {item.nama}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5 sm:hidden">
+                          {item.kode}
+                        </div>
+                      </td>
 
-                    {/* Harga */}
-                    <td className="px-3 py-3 text-right font-medium">
-                      Rp {harga}
-                    </td>
+                      <td className="px-3 py-3 text-gray-600 hidden sm:table-cell">
+                        {item.kode}
+                      </td>
 
-                    {/* Status badge */}
-                    <td className="px-3 py-3 text-center">
-                      {isGangguan ? (
-                        <Badge variant="destructive" className="text-xs">
-                          Gangguan
-                        </Badge>
-                      ) : stokKosong ? (
-                        <Badge variant="secondary" className="text-xs">
-                          Stok Habis
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-green-600 hover:bg-green-600 text-xs">
-                          Normal
-                        </Badge>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
+                      <td className="px-3 py-3 text-right font-medium">
+                        Rp {harga}
+                      </td>
+
+                      <td className="px-3 py-3 text-center">
+                        {isGangguan ? (
+                          <Badge variant="destructive" className="text-xs">
+                            Gangguan
+                          </Badge>
+                        ) : stokKosong ? (
+                          <Badge variant="secondary" className="text-xs">
+                            Stok Habis
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-green-600 text-xs">Normal</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </React.Fragment>
+            ))}
           </tbody>
         </table>
       </div>
