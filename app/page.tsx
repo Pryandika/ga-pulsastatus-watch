@@ -37,7 +37,7 @@ export default function ProdukPage() {
     // PLN
     if (u.includes("PLN")) return "PLN";
 
-    // DATA — broad match for almost everything data-related
+    // DATA
     if (
       u.includes("DATA") ||
       u.includes("BY U") ||
@@ -62,18 +62,19 @@ export default function ProdukPage() {
       return "DATA";
     }
 
-    // PULSA — credit, calls, transfer, masa aktif
+    // PULSA
     if (
       u.includes("PULSA") ||
       u.includes("NELPON") ||
       u.includes("TELPON") ||
       u.includes("TRANSFER PULSA") ||
+      u.includes("TRANSFER") ||
       u.includes("MASA AKTIF")
     ) {
       return "PULSA";
     }
 
-    // Everything else → LAINNYA
+    // Everything else
     return "LAINNYA";
   };
 
@@ -166,19 +167,28 @@ export default function ProdukPage() {
 
       {/* ==================== SUB TABS (brands) ==================== */}
       {availableBrands.length > 0 && (
-        <Tabs
-          value={activeBrand}
-          onValueChange={setActiveBrand}
-          className="mb-6"
-        >
-          <TabsList className="flex flex-wrap gap-1">
-            {subTabs.map((brand) => (
-              <TabsTrigger key={brand} value={brand} className="text-sm">
-                {brand}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <>
+          <div className="mb-8 pb-2 min-h-[44px]">
+            <Tabs
+              value={activeBrand}
+              onValueChange={setActiveBrand}
+              className="w-full"
+            >
+              <TabsList className="flex flex-wrap gap-1.5 justify-start bg-transparent h-auto min-h-0 p-0">
+                {subTabs.map((brand) => (
+                  <TabsTrigger
+                    key={brand}
+                    value={brand}
+                    className={`inline-flex items-center justify-center rounded-full bg-muted/70 hover:bg-muted px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow whitespace-nowrap`}
+                  >
+                    {brand}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+          <div className="h-15 sm:h-0 mb-2" />
+        </>
       )}
 
       {/* ==================== TABLE ==================== */}
