@@ -8,13 +8,9 @@ import React from "react";
 
 import { Product, OperatorGroup, StatusInfo } from "./types";
 
-// Paste or import your helpers & types
-// (getCategory, getBrand, matchesSearch, formatPrice, getProductStatus, getFilteredAndSearchedGroups)
-
-// ← paste all your exported helper functions here (or better: move to lib/utils.ts & import)
 export function getCategory(
   operator: string,
-): "PULSA" | "DATA" | "PLN" | "LAINNYA" {
+): "PULSA" | "DATA" | "PLN" | "E-MONEY" | "LAINNYA" {
   const u = operator.toUpperCase().trim();
 
   if (u.includes("PLN")) return "PLN";
@@ -54,6 +50,17 @@ export function getCategory(
     return "PULSA";
   }
 
+  if (
+    u.includes("DANA") ||
+    u.includes("GOJEK") ||
+    u.includes("OVO") ||
+    u.includes("SHOPEE") ||
+    u.includes("BRIZZI") ||
+    u.includes("LINKAJA")
+  ) {
+    return "E-MONEY";
+  }
+
   return "LAINNYA";
 }
 
@@ -86,7 +93,7 @@ export function getProductStatus(item: Product): StatusInfo {
 
 export function getFilteredAndSearchedGroups(
   allGroups: OperatorGroup[],
-  category: "PULSA" | "DATA" | "PLN" | "LAINNYA",
+  category: "PULSA" | "DATA" | "PLN" | "E-MONEY" | "LAINNYA",
   brand: string,
   search: string,
 ): OperatorGroup[] {
@@ -117,11 +124,11 @@ export default function ProductListClient({
 }) {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<
-    "PULSA" | "DATA" | "PLN" | "LAINNYA"
+    "PULSA" | "DATA" | "PLN" | "E-MONEY" | "LAINNYA"
   >("PULSA");
   const [activeBrand, setActiveBrand] = useState("SEMUA");
 
-  const [data] = useState(initialData); // no need to setData again — we use initial only
+  const [data] = useState(initialData);
 
   const headerRef = useRef<HTMLTableSectionElement>(null);
   const [headerHeight, setHeaderHeight] = useState(48);
@@ -130,7 +137,7 @@ export default function ProductListClient({
     if (headerRef.current) {
       setHeaderHeight(headerRef.current.offsetHeight);
     }
-  }, [data]); // only runs once basically
+  }, [data]);
 
   useEffect(() => {
     setActiveBrand("SEMUA");
@@ -158,7 +165,6 @@ export default function ProductListClient({
     [displayedGroups],
   );
 
-  // Your full JSX ↓ (almost unchanged)
   return (
     <div className="p-4 max-w-4xl mx-auto min-h-screen">
       <h1 className="text-xl sm:text-2xl font-semibold mb-4">Daftar Produk</h1>
@@ -175,14 +181,17 @@ export default function ProductListClient({
       <Tabs
         value={activeCategory}
         onValueChange={(value) =>
-          setActiveCategory(value as "PULSA" | "DATA" | "PLN" | "LAINNYA")
+          setActiveCategory(
+            value as "PULSA" | "DATA" | "PLN" | "E-MONEY" | "LAINNYA",
+          )
         }
         className="mb-4"
       >
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="PULSA">PULSA</TabsTrigger>
           <TabsTrigger value="DATA">DATA</TabsTrigger>
           <TabsTrigger value="PLN">PLN</TabsTrigger>
+          <TabsTrigger value="E-MONEY">E-MONEY</TabsTrigger>
           <TabsTrigger value="LAINNYA">LAINNYA</TabsTrigger>
         </TabsList>
       </Tabs>
@@ -196,19 +205,15 @@ export default function ProductListClient({
               className="w-full"
             >
               <TabsList className="flex flex-wrap gap-1.5 justify-start bg-transparent h-auto min-h-0 p-0">
-                {availableBrands.map(
-                  (
-                    brand, // ← note: use availableBrands directly
-                  ) => (
-                    <TabsTrigger
-                      key={brand}
-                      value={brand}
-                      className={`inline-flex items-center justify-center rounded-full bg-muted/70 hover:bg-muted px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow whitespace-nowrap`}
-                    >
-                      {brand}
-                    </TabsTrigger>
-                  ),
-                )}
+                {availableBrands.map((brand) => (
+                  <TabsTrigger
+                    key={brand}
+                    value={brand}
+                    className={`inline-flex items-center justify-center rounded-full bg-muted/70 hover:bg-muted px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow whitespace-nowrap`}
+                  >
+                    {brand}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </Tabs>
           </div>
@@ -261,7 +266,7 @@ export default function ProductListClient({
                 </tr>
 
                 {group.products.map((item) => {
-                  const harga = formatPrice(Number(item.harga)); // ← use your helper
+                  const harga = formatPrice(Number(item.harga));
 
                   const status = getProductStatus(item);
 
