@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
 
 type Product = {
@@ -22,19 +23,95 @@ type OperatorGroup = {
 export default function ProdukPage() {
   const [data, setData] = useState<OperatorGroup[]>([]);
   const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<
+    "PULSA" | "DATA" | "PLN"
+  >("PULSA");
+  const [activeBrand, setActiveBrand] = useState("SEMUA");
+
+  // Helper functions
+  const getCategory = (operator: string): "PULSA" | "DATA" | "PLN" | null => {
+    const u = operator.toUpperCase().trim();
+    if (u.includes("PLN")) return "PLN";
+
+    // DATA category (covers almost all data packages + special cases)
+    if (
+      u.includes("DATA") ||
+      u.includes("BY U") ||
+      u.includes("VOUCHER BALI") ||
+      u.includes("AON") ||
+      u.includes("HAPPY") ||
+      u.includes("MINI") ||
+      u.includes("UNLIMITED") ||
+      u.includes("FLAZZ") ||
+      u.includes("HARIAN") ||
+      u.includes("NASIONAL") ||
+      u.includes("OMNI") ||
+      u.includes("REG") ||
+      u.includes("BULK") ||
+      u.includes("XTRA") ||
+      u.includes("BEBAS PUAS") ||
+      u.includes("FLEX MAX")
+    ) {
+      return "DATA";
+    }
+
+    // PULSA category (credit + calls + transfer + masa aktif)
+    if (
+      u.includes("PULSA") ||
+      u.includes("NELPON") ||
+      u.includes("TELPON") ||
+      u.includes("TRANSFER PULSA") ||
+      u.includes("MASA AKTIF")
+    ) {
+      return "PULSA";
+    }
+
+    return null; // games, e-wallet, PPOB, etc. → hidden
+  };
+
+  const getBrand = (operator: string): string => {
+    const words = operator.split(" ");
+    return words[0].toUpperCase();
+  };
 
   useEffect(() => {
     async function loadData() {
       const res = await fetch("/api/data");
       const json = await res.json();
-
       setData(json);
     }
-
     loadData();
   }, []);
 
-  const filtered = data
+  // Reset brand to SEMUA when category changes
+  useEffect(() => {
+    setActiveBrand("SEMUA");
+  }, [activeCategory]);
+
+  // Available brands for current category
+  const availableBrands = useMemo(() => {
+    const groupsInCat = data.filter(
+      (g) => getCategory(g.operator) === activeCategory,
+    );
+    const brandsSet = new Set(groupsInCat.map((g) => getBrand(g.operator)));
+    return Array.from(brandsSet).sort();
+  }, [data, activeCategory]);
+
+  const subTabs = ["SEMUA", ...availableBrands];
+
+  // First filter by category + brand
+  const displayedGroups = data.filter((group) => {
+    const cat = getCategory(group.operator);
+    if (cat !== activeCategory) return false;
+
+    const brand = getBrand(group.operator);
+    if (activeBrand !== "SEMUA" && brand !== activeBrand) return false;
+
+    return true;
+  });
+
+  // Then apply search on products + remove empty groups
+  const searchedGroups = displayedGroups
     .map((group) => ({
       ...group,
       products: group.products.filter(
@@ -44,6 +121,11 @@ export default function ProdukPage() {
       ),
     }))
     .filter((group) => group.products.length > 0);
+
+  const totalProducts = searchedGroups.reduce(
+    (sum, group) => sum + group.products.length,
+    0,
+  );
 
   return (
     <div className="p-4 max-w-4xl mx-auto min-h-screen">
@@ -58,7 +140,39 @@ export default function ProdukPage() {
         />
       </div>
 
-      {/* Mobile-friendly responsive table */}
+      {/* ==================== MAIN TABS: PULSA | DATA | PLN ==================== */}
+      <Tabs
+        value={activeCategory}
+        onValueChange={(value) =>
+          setActiveCategory(value as "PULSA" | "DATA" | "PLN")
+        }
+        className="mb-4"
+      >
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="PULSA">PULSA</TabsTrigger>
+          <TabsTrigger value="DATA">DATA</TabsTrigger>
+          <TabsTrigger value="PLN">PLN</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* ==================== SUB TABS (brands) ==================== */}
+      {availableBrands.length > 0 && (
+        <Tabs
+          value={activeBrand}
+          onValueChange={setActiveBrand}
+          className="mb-6"
+        >
+          <TabsList className="flex flex-wrap gap-1">
+            {subTabs.map((brand) => (
+              <TabsTrigger key={brand} value={brand} className="text-sm">
+                {brand}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      )}
+
+      {/* ==================== TABLE ==================== */}
       <div className="overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
@@ -91,7 +205,7 @@ export default function ProdukPage() {
           </thead>
 
           <tbody className="bg-white divide-y divide-gray-200">
-            {filtered.map((group) => (
+            {searchedGroups.map((group) => (
               <React.Fragment key={group.idoperator}>
                 {/* Operator header */}
                 <tr className="bg-gray-100">
@@ -152,7 +266,7 @@ export default function ProdukPage() {
 
       {/* Optional: show count */}
       <div className="mt-4 text-sm text-gray-500 text-center sm:text-left">
-        Menampilkan {filtered.length} produk
+        Menampilkan {totalProducts} produk
       </div>
     </div>
   );
