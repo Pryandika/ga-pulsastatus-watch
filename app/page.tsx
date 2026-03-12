@@ -24,16 +24,20 @@ export default function ProdukPage() {
   const [data, setData] = useState<OperatorGroup[]>([]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<
-    "PULSA" | "DATA" | "PLN"
+    "PULSA" | "DATA" | "PLN" | "LAINNYA"
   >("PULSA");
   const [activeBrand, setActiveBrand] = useState("SEMUA");
 
-  // Helper functions
-  const getCategory = (operator: string): "PULSA" | "DATA" | "PLN" | null => {
+  // Helper: determine main category
+  const getCategory = (
+    operator: string,
+  ): "PULSA" | "DATA" | "PLN" | "LAINNYA" => {
     const u = operator.toUpperCase().trim();
+
+    // PLN
     if (u.includes("PLN")) return "PLN";
 
-    // DATA category (covers almost all data packages + special cases)
+    // DATA — broad match for almost everything data-related
     if (
       u.includes("DATA") ||
       u.includes("BY U") ||
@@ -50,12 +54,15 @@ export default function ProdukPage() {
       u.includes("BULK") ||
       u.includes("XTRA") ||
       u.includes("BEBAS PUAS") ||
-      u.includes("FLEX MAX")
+      u.includes("FLEX MAX") ||
+      u.includes("FREEDOM") ||
+      u.includes("COMBO") ||
+      u.includes("INET")
     ) {
       return "DATA";
     }
 
-    // PULSA category (credit + calls + transfer + masa aktif)
+    // PULSA — credit, calls, transfer, masa aktif
     if (
       u.includes("PULSA") ||
       u.includes("NELPON") ||
@@ -66,7 +73,8 @@ export default function ProdukPage() {
       return "PULSA";
     }
 
-    return null; // games, e-wallet, PPOB, etc. → hidden
+    // Everything else → LAINNYA
+    return "LAINNYA";
   };
 
   const getBrand = (operator: string): string => {
@@ -83,12 +91,12 @@ export default function ProdukPage() {
     loadData();
   }, []);
 
-  // Reset brand to SEMUA when category changes
+  // Reset brand when category changes
   useEffect(() => {
     setActiveBrand("SEMUA");
   }, [activeCategory]);
 
-  // Available brands for current category
+  // Get brands for current category
   const availableBrands = useMemo(() => {
     const groupsInCat = data.filter(
       (g) => getCategory(g.operator) === activeCategory,
@@ -99,7 +107,7 @@ export default function ProdukPage() {
 
   const subTabs = ["SEMUA", ...availableBrands];
 
-  // First filter by category + brand
+  // Filter groups by category + brand
   const displayedGroups = data.filter((group) => {
     const cat = getCategory(group.operator);
     if (cat !== activeCategory) return false;
@@ -110,7 +118,7 @@ export default function ProdukPage() {
     return true;
   });
 
-  // Then apply search on products + remove empty groups
+  // Apply search → remove empty groups after filtering
   const searchedGroups = displayedGroups
     .map((group) => ({
       ...group,
@@ -123,7 +131,7 @@ export default function ProdukPage() {
     .filter((group) => group.products.length > 0);
 
   const totalProducts = searchedGroups.reduce(
-    (sum, group) => sum + group.products.length,
+    (sum, g) => sum + g.products.length,
     0,
   );
 
@@ -140,18 +148,19 @@ export default function ProdukPage() {
         />
       </div>
 
-      {/* ==================== MAIN TABS: PULSA | DATA | PLN ==================== */}
+      {/* ==================== MAIN TABS ==================== */}
       <Tabs
         value={activeCategory}
         onValueChange={(value) =>
-          setActiveCategory(value as "PULSA" | "DATA" | "PLN")
+          setActiveCategory(value as "PULSA" | "DATA" | "PLN" | "LAINNYA")
         }
         className="mb-4"
       >
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="PULSA">PULSA</TabsTrigger>
           <TabsTrigger value="DATA">DATA</TabsTrigger>
           <TabsTrigger value="PLN">PLN</TabsTrigger>
+          <TabsTrigger value="LAINNYA">LAINNYA</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -207,7 +216,6 @@ export default function ProdukPage() {
           <tbody className="bg-white divide-y divide-gray-200">
             {searchedGroups.map((group) => (
               <React.Fragment key={group.idoperator}>
-                {/* Operator header */}
                 <tr className="bg-gray-100">
                   <td
                     colSpan={4}
@@ -219,7 +227,6 @@ export default function ProdukPage() {
 
                 {group.products.map((item) => {
                   const harga = Number(item.harga).toLocaleString("id-ID");
-
                   const isGangguan = item.gangguan === 1;
                   const stokKosong = item.stokKosong === 1;
 
@@ -233,15 +240,12 @@ export default function ProdukPage() {
                           {item.kode}
                         </div>
                       </td>
-
                       <td className="px-3 py-3 text-gray-600 hidden sm:table-cell">
                         {item.kode}
                       </td>
-
                       <td className="px-3 py-3 text-right font-medium">
                         Rp {harga}
                       </td>
-
                       <td className="px-3 py-3 text-center">
                         {isGangguan ? (
                           <Badge variant="destructive" className="text-xs">
@@ -264,7 +268,6 @@ export default function ProdukPage() {
         </table>
       </div>
 
-      {/* Optional: show count */}
       <div className="mt-4 text-sm text-gray-500 text-center sm:text-left">
         Menampilkan {totalProducts} produk
       </div>
