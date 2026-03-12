@@ -3,7 +3,7 @@ export async function GET() {
     headers: {
       "x-api-key": process.env.API_KEY as string,
     },
-    cache: "no-store",
+    next: { revalidate: 60 },
   });
 
   if (!res.ok) {
