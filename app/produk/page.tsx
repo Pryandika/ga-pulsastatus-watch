@@ -4,7 +4,7 @@ import { OperatorGroup } from "./types";
 export const revalidate = 300;
 
 export default async function ProdukPage() {
-  const res = await fetch(`${process.env.API_URL}`, {
+  const res = await fetch(`${process.env.API_URL}/data`, {
     headers: {
       "x-api-key": process.env.API_KEY as string,
     },
