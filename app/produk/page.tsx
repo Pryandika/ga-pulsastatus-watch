@@ -4,9 +4,9 @@ import { OperatorGroup } from "./types";
 export const revalidate = 300;
 
 export default async function ProdukPage() {
-  const res = await fetch("https://api.gunaarthapulsa.com/data", {
+  const res = await fetch(`${process.env.API_URL}`, {
     headers: {
-      "x-api-key": "LaFvdfXAZdM2XPn0vPUrD1RLdpcpWHj1",
+      "x-api-key": process.env.API_KEY as string,
     },
     next: { revalidate: 300 },
   });
