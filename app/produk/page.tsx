@@ -12,8 +12,7 @@ export default async function ProdukPage() {
   });
 
   if (!res.ok) {
-    // In production: better to use error.tsx boundary
-    // For dev: you can throw or return fallback UI
+    // TODO In production: better to use error.tsx boundary
     throw new Error("Gagal memuat data produk");
   }
 
