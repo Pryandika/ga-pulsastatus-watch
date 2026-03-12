@@ -91,25 +91,42 @@ export function getProductStatus(item: Product): StatusInfo {
   return { variant: "default", label: "Normal", className: "bg-green-600" };
 }
 
+const operatorPriority: Record<string, number> = {
+  "INDOSAT PULSA": 100,
+  "TELKOMSEL PULSA AS": 99,
+  "TELKOMSEL PULSA SIMPATI": 98,
+  "XL PULSA": 97,
+  "AXIS PULSA": 96,
+  "SMART PULSA": 95,
+  "TRI PULSA": 94,
+  // ...
+};
+const getPriority = (operator: string) => operatorPriority[operator] ?? 0;
+
 export function getFilteredAndSearchedGroups(
   allGroups: OperatorGroup[],
   category: "PULSA" | "DATA" | "PLN" | "E-MONEY" | "LAINNYA",
   brand: string,
   search: string,
 ): OperatorGroup[] {
-  // Step 1: category filter
-  const groupsInCategory = allGroups.filter(
-    (g) => getCategory(g.operator) === category,
-  );
+  let groups = allGroups.filter((g) => getCategory(g.operator) === category);
 
-  // Step 2: brand filter (if not "SEMUA")
-  const groupsAfterBrand =
-    brand === "SEMUA"
-      ? groupsInCategory
-      : groupsInCategory.filter((g) => getBrand(g.operator) === brand);
+  if (brand !== "SEMUA") {
+    groups = groups.filter((g) => getBrand(g.operator) === brand);
+  }
 
-  // Step 3: search inside products + remove empty groups
-  return groupsAfterBrand
+  groups.sort((a, b) => {
+    const prioA = getPriority(a.operator);
+    const prioB = getPriority(b.operator);
+
+    if (prioA !== prioB) {
+      return prioB - prioA;
+    }
+
+    return a.operator.localeCompare(b.operator);
+  });
+
+  return groups
     .map((group) => ({
       ...group,
       products: group.products.filter((p) => matchesSearch(p, search)),
@@ -187,12 +204,37 @@ export default function ProductListClient({
         }
         className="mb-4"
       >
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="PULSA">PULSA</TabsTrigger>
-          <TabsTrigger value="DATA">DATA</TabsTrigger>
-          <TabsTrigger value="PLN">PLN</TabsTrigger>
-          <TabsTrigger value="E-MONEY">E-MONEY</TabsTrigger>
-          <TabsTrigger value="LAINNYA">LAINNYA</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 gap-1.5 justify-start bg-transparent h-auto min-h-0 p-0">
+          <TabsTrigger
+            value="PULSA"
+            className={`inline-flex items-center justify-center rounded-full bg-muted/70 hover:bg-muted px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow whitespace-nowrap`}
+          >
+            PULSA
+          </TabsTrigger>
+          <TabsTrigger
+            value="DATA"
+            className={`inline-flex items-center justify-center rounded-full bg-muted/70 hover:bg-muted px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow whitespace-nowrap`}
+          >
+            DATA
+          </TabsTrigger>
+          <TabsTrigger
+            value="PLN"
+            className={`inline-flex items-center justify-center rounded-full bg-muted/70 hover:bg-muted px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow whitespace-nowrap`}
+          >
+            PLN
+          </TabsTrigger>
+          <TabsTrigger
+            value="E-MONEY"
+            className={`inline-flex items-center justify-center rounded-full bg-muted/70 hover:bg-muted px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow whitespace-nowrap`}
+          >
+            E-MONEY
+          </TabsTrigger>
+          <TabsTrigger
+            value="LAINNYA"
+            className={`inline-flex items-center justify-center rounded-full bg-muted/70 hover:bg-muted px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow whitespace-nowrap`}
+          >
+            LAINNYA
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -273,14 +315,16 @@ export default function ProductListClient({
                   return (
                     <tr key={item.kode} className="hover:bg-gray-50">
                       <td className="px-3 py-3">
-                        <div className="font-medium text-gray-900">
-                          {item.nama}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-0.5 sm:hidden">
-                          {item.kode}
+                        <div className="flex flex-col">
+                          <div className="text-xs text-gray-900 mt-0.5 sm:hidden order-1 sm:order-2">
+                            {item.kode}
+                          </div>
+                          <div className="font-medium text-gray-900 order-2 sm:order-1">
+                            {item.nama}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-gray-600 hidden sm:table-cell">
+                      <td className="px-3 py-3 text-gray-900 hidden sm:table-cell">
                         {item.kode}
                       </td>
                       <td className="px-3 py-3 text-right font-medium">
