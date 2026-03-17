@@ -56,7 +56,8 @@ export function getCategory(
     u.includes("OVO") ||
     u.includes("SHOPEE") ||
     u.includes("BRIZZI") ||
-    u.includes("LINKAJA")
+    u.includes("LINKAJA") ||
+    u.includes("GOPAY")
   ) {
     return "E-MONEY";
   }
