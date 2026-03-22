@@ -100,6 +100,7 @@ const operatorPriority: Record<string, number> = {
   "AXIS PULSA": 96,
   "SMART PULSA": 95,
   "TRI PULSA": 94,
+  "TELKOMSEL DATA FLAZZ": 93,
   // ...
 };
 const getPriority = (operator: string) => operatorPriority[operator] ?? 0;
